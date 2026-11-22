@@ -1,15 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <rect width="64" height="64" rx="14" fill="#1f4fbf"/>
-  <g stroke-linecap="round" fill="none">
-    <path d="M5 17L33 9" stroke="#6298e8" stroke-width="7"/>
-    <path d="M24 55L59 46" stroke="#6298e8" stroke-width="7"/>
-    <path d="M40 22L60 15" stroke="#fae478" stroke-width="5"/>
-    <path d="M6 44L18 40" stroke="#fae478" stroke-width="5"/>
-    <g transform="translate(2.2 2.6)" stroke="#1a1a2e" stroke-width="9" stroke-linejoin="round">
-      <path d="M22 12V52M44 12L22 34M30 30L46 52"/>
+  <g stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M6 51L27 45" stroke="#6298e8" stroke-width="6"/>
+    <path d="M41 57L58 52" stroke="#6298e8" stroke-width="5"/>
+    <g transform="translate(2 2.4)" stroke="#1a1a2e" stroke-width="9">
+      <path d="M21 11V53"/>
+      <path d="M25 34L51 8M26 36L56 22"/>
+      <path d="M27 39L48 56"/>
     </g>
-    <g stroke="#f5c428" stroke-width="8" stroke-linejoin="round">
-      <path d="M22 12V52M44 12L22 34M30 30L46 52"/>
-    </g>
+    <path d="M21 11V53" stroke="#f5c428" stroke-width="8"/>
+    <path d="M25 34L51 8" stroke="#fae478" stroke-width="7.5"/>
+    <path d="M26 36L56 22" stroke="#f5c428" stroke-width="7.5"/>
+    <path d="M27 39L48 56" stroke="#d6301f" stroke-width="8"/>
   </g>
 </svg>
