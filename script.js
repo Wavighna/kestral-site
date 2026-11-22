@@ -52,7 +52,8 @@
   }
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, t) => a + (b - a) * t;
-  const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  const ease = t => 0.5 - 0.5 * Math.cos(Math.PI * t);          // sine in-out: even stroke rate
+  const easeSoft = t => t * t * (3 - 2 * t) * 0.35 + t * 0.65;   // almost linear, soft ends
 
   // ---- layout (one source of truth for every stage) -------------------
   let W = 0, H = 0, B = 0, sc = 1, L = {};
@@ -275,12 +276,36 @@
     cv.style.transition = 'none'; cv.style.opacity = '1'; cv.style.zIndex = String(++zTop);
   }
 
+  // Build the next stage while the current one is holding, so no frame has to do it.
+  const built = {};
+  let layoutVer = 0;
+  function getBuilt(i) {
+    const k = i % STAGES.length;
+    const b = built[k];
+    if (b && b.ver === layoutVer) return b;
+    return (built[k] = { ver: layoutVer, strokes: HAND.length ? [] : buildStage(k), word: null });
+  }
+  function getWord(i) {
+    const b = getBuilt(i);
+    if (!b.word) b.word = buildWord(i % STAGES.length);
+    return b;
+  }
+  const idle = fn => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 1500 }) : setTimeout(fn, 60));
+  let prebuilt = -1;
+  function prebuildNext(i) {
+    const n = (i + 1) % count();
+    if (prebuilt === n) return;
+    prebuilt = n;
+    idle(() => { getBuilt(n); idle(() => getWord(n)); });
+  }
+
   function enter(i) {
     curStage = i;
     drawn = 0; wDrawn = 0;
     swapWord();
-    strokes = HAND.length ? [] : buildStage(i % STAGES.length);
-    word = buildWord(i % STAGES.length);
+    const b = getWord(i);
+    strokes = b.strokes;
+    word = b.word;
     setAge(i);
   }
 
@@ -290,6 +315,7 @@
     const local = el % STAGE_MS;
     if (i !== curStage) enter(i);
 
+    if (local > 900) prebuildNext(i);
     const p = ease(clamp(local / PAINT_MS, 0, 1));
     if (i === 0 && el >= count() * STAGE_MS && local < 700) {
       sctx.globalAlpha = 0.12; sctx.fillStyle = rgb(C.paper, 1); sctx.fillRect(0, 0, W, H); sctx.globalAlpha = 1;
@@ -299,15 +325,17 @@
       if (img && img.complete && img.naturalWidth) drawCover(img, clamp(p * 1.4, 0, 1));
     } else {
       const upto = Math.floor(p * strokes.length);
-      while (drawn < upto) dab(sctx, strokes[drawn++]);
+      const cap = Math.max(90, Math.ceil(strokes.length / 40));   // never a burst after a slow frame
+      for (let n = 0; drawn < upto && n < cap; n++) dab(sctx, strokes[drawn++]);
     }
 
     if (!oldFaded && oldWord && local > PAINT_MS * 0.8) {
-      oldWord.style.transition = 'opacity .9s'; oldWord.style.opacity = '0'; oldFaded = true;
+      oldWord.style.transition = 'opacity 1.4s ease'; oldWord.style.opacity = '0'; oldFaded = true;
     }
-    const pw = ease(clamp(local / (PAINT_MS * 0.75), 0, 1));
+    const pw = easeSoft(clamp(local / (PAINT_MS * 0.75), 0, 1));
     const wupto = Math.floor(pw * word.strokes.length);
-    while (wDrawn < wupto) wordDab(word.strokes[wDrawn++], word.g);
+    const wcap = Math.max(60, Math.ceil(word.strokes.length / 36));
+    for (let n = 0; wDrawn < wupto && n < wcap; n++) wordDab(word.strokes[wDrawn++], word.g);
 
     requestAnimationFrame(frame);
   }
@@ -325,7 +353,7 @@
   }
 
   function start() {
-    layout();
+    layout(); layoutVer++; prebuilt = -1;
     sizeCanvas(stageCv, sctx); wordCvs.forEach((c, k) => sizeCanvas(c, wordCtxs[k]));
     sctx.fillStyle = rgb(C.paper, 1); sctx.fillRect(0, 0, W, H);
     wordCtxs.forEach(c => c.clearRect(0, 0, W, H));
