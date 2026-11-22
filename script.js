@@ -38,8 +38,8 @@
   ];
   const WORD_RGB = { blue: C.blue, red: C.red, yellow: C.yellow };
 
-  const PAINT_MS = 4600;
-  const STAGE_MS = 6800;
+  const PAINT_MS = 7000;   // how long each stage takes to paint
+  const STAGE_MS = 10000;  // paint + a few seconds to hold before the next stage
 
   function rng(seed) {
     let a = seed >>> 0;
@@ -330,7 +330,7 @@
     }
 
     if (!oldFaded && oldWord && local > PAINT_MS * 0.8) {
-      oldWord.style.transition = 'opacity 1.4s ease'; oldWord.style.opacity = '0'; oldFaded = true;
+      oldWord.style.transition = 'opacity 2s ease'; oldWord.style.opacity = '0'; oldFaded = true;
     }
     const pw = easeSoft(clamp(local / (PAINT_MS * 0.75), 0, 1));
     const wupto = Math.floor(pw * word.strokes.length);
